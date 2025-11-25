@@ -39,27 +39,27 @@ jobs:
       - name: Prepare artifact (Unix)
         if: runner.os != 'Windows'
         run: |
-          cp target/${{ matrix.target }}/release/embedded-postgres embedded-postgres-${{ matrix.name }}
-          chmod +x embedded-postgres-${{ matrix.name }}
+          cp target/${{ matrix.target }}/release/pg0 pg0-${{ matrix.name }}
+          chmod +x pg0-${{ matrix.name }}
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
         run: |
-          copy target\${{ matrix.target }}\release\embedded-postgres.exe embedded-postgres-${{ matrix.name }}.exe
+          copy target\${{ matrix.target }}\release\pg0.exe pg0-${{ matrix.name }}.exe
 
       - name: Upload artifact (Unix)
         if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.name }}
-          path: embedded-postgres-${{ matrix.name }}
+          path: pg0-${{ matrix.name }}
 
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.name }}
-          path: embedded-postgres-${{ matrix.name }}.exe
+          path: pg0-${{ matrix.name }}.exe
 
   release:
     needs: [build-cli]
@@ -91,12 +91,12 @@ jobs:
           PG_VERSION: ${{ steps.versions.outputs.PG_VERSION }}
           PGVECTOR_VERSION: ${{ steps.versions.outputs.PGVECTOR_VERSION }}
         run: |
-          echo "## Embedded PostgreSQL CLI" > release_notes.md
+          echo "## pg0 - Embedded PostgreSQL CLI" > release_notes.md
           echo "" >> release_notes.md
           echo "### CLI Binaries" >> release_notes.md
-          echo "- \`embedded-postgres-darwin-aarch64\` - macOS Apple Silicon" >> release_notes.md
-          echo "- \`embedded-postgres-linux-x86_64\` - Linux x86_64" >> release_notes.md
-          echo "- \`embedded-postgres-windows-x86_64.exe\` - Windows x64" >> release_notes.md
+          echo "- \`pg0-darwin-aarch64\` - macOS Apple Silicon" >> release_notes.md
+          echo "- \`pg0-linux-x86_64\` - Linux x86_64" >> release_notes.md
+          echo "- \`pg0-windows-x86_64.exe\` - Windows x64" >> release_notes.md
           echo "" >> release_notes.md
           echo "### Bundled Components" >> release_notes.md
           echo "On first run, the CLI automatically downloads:" >> release_notes.md
@@ -105,6 +105,6 @@ jobs:
           echo "" >> release_notes.md
           echo "### Installation (macOS/Linux)" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
-          echo "curl -fsSL https://raw.githubusercontent.com/vectorize-io/embedded-pg-cli/main/install.sh | bash" >> release_notes.md
+          echo "curl -fsSL https://raw.githubusercontent.com/vectorize-io/pg0/main/install.sh | bash" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
           gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --notes-file release_notes.md release/*

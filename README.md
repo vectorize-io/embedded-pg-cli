@@ -1,43 +1,45 @@
-# embedded-postgres-cli
+# pg0
 
-Run PostgreSQL locally without installation. Includes **pgvector** for AI/vector workloads out of the box.
+**Zero-dependency embedded PostgreSQL** - Run PostgreSQL locally without installation. A single binary that downloads and manages PostgreSQL for you.
+
+Includes **pgvector** for AI/vector workloads out of the box.
 
 ## Features
 
-- Zero dependencies - just download and run
-- PostgreSQL 16 with pgvector pre-installed
-- Works on macOS (Intel & Apple Silicon) and Linux (x86_64 & ARM64)
+- **Zero dependencies** - single binary, no installation required
+- **Embedded PostgreSQL 16** with pgvector pre-installed
+- Works on macOS (Apple Silicon), Linux (x86_64), and Windows (x64)
 - Bundled `psql` client - no separate installation needed
 - Data persists between restarts
 
 ## Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vectorize-io/embedded-pg-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/vectorize-io/pg0/main/install.sh | bash
 ```
 
 Or with a custom install directory:
 
 ```bash
-INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/vectorize-io/embedded-pg-cli/main/install.sh | bash
+INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/vectorize-io/pg0/main/install.sh | bash
 ```
 
 ## Quick Start
 
 ```bash
 # Start PostgreSQL
-embedded-postgres start
+pg0 start
 
 # Connect with psql
-embedded-postgres psql
+pg0 psql
 
 # Use pgvector
-embedded-postgres psql -c "CREATE EXTENSION IF NOT EXISTS vector;"
-embedded-postgres psql -c "CREATE TABLE items (embedding vector(3));"
-embedded-postgres psql -c "INSERT INTO items VALUES ('[1,2,3]');"
+pg0 psql -c "CREATE EXTENSION IF NOT EXISTS vector;"
+pg0 psql -c "CREATE TABLE items (embedding vector(3));"
+pg0 psql -c "INSERT INTO items VALUES ('[1,2,3]');"
 
 # Stop when done
-embedded-postgres stop
+pg0 stop
 ```
 
 ## Usage
@@ -45,29 +47,29 @@ embedded-postgres stop
 ### Start PostgreSQL
 
 ```bash
-# Start with defaults (port 5432, PostgreSQL 16)
-embedded-postgres start
+# Start with defaults (port 5432)
+pg0 start
 
 # Start with custom options
-embedded-postgres start --port 5433 --username myuser --password mypass --database myapp
+pg0 start --port 5433 --username myuser --password mypass --database myapp
 ```
 
 ### Stop PostgreSQL
 
 ```bash
-embedded-postgres stop
+pg0 stop
 ```
 
 ### Check Status
 
 ```bash
-embedded-postgres status
+pg0 status
 ```
 
 ### Get Connection URI
 
 ```bash
-embedded-postgres uri
+pg0 uri
 # Output: postgresql://postgres:postgres@localhost:5432/postgres
 ```
 
@@ -75,13 +77,13 @@ embedded-postgres uri
 
 ```bash
 # Interactive shell
-embedded-postgres psql
+pg0 psql
 
 # Run a single command
-embedded-postgres psql -c "SELECT version();"
+pg0 psql -c "SELECT version();"
 
 # Run a SQL file
-embedded-postgres psql -f schema.sql
+pg0 psql -f schema.sql
 ```
 
 ### Using pgvector
@@ -89,7 +91,7 @@ embedded-postgres psql -f schema.sql
 pgvector is pre-installed. Just enable it:
 
 ```bash
-embedded-postgres psql -c "CREATE EXTENSION IF NOT EXISTS vector;"
+pg0 psql -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
 Then use it for vector similarity search:
@@ -111,10 +113,10 @@ For extensions beyond pgvector:
 
 ```bash
 # List available extensions
-embedded-postgres list-extensions
+pg0 list-extensions
 
 # Install an extension
-embedded-postgres install-extension <name>
+pg0 install-extension <name>
 ```
 
 ## Options
@@ -128,11 +130,11 @@ embedded-postgres install-extension <name>
 ### Start Options
 
 ```
-embedded-postgres start [OPTIONS]
+pg0 start [OPTIONS]
 
 Options:
   -p, --port <PORT>          Port to listen on [default: 5432]
-  -d, --data-dir <DATA_DIR>  Data directory [default: ~/.embedded-postgres/data]
+  -d, --data-dir <DATA_DIR>  Data directory [default: ~/.pg0/data]
   -u, --username <USERNAME>  Username [default: postgres]
   -P, --password <PASSWORD>  Password [default: postgres]
   -n, --database <DATABASE>  Database name [default: postgres]
@@ -140,17 +142,17 @@ Options:
 
 ## How It Works
 
-On first run, the CLI downloads a pre-built PostgreSQL 16 + pgvector bundle (~50MB) from GitHub releases. This is cached in `~/.embedded-postgres/installation/` for subsequent runs.
+On first run, pg0 downloads PostgreSQL from [theseus-rs](https://github.com/theseus-rs/postgresql-binaries) and pgvector from pre-compiled binaries. These are cached in `~/.pg0/installation/` for subsequent runs.
 
-Data is stored in `~/.embedded-postgres/data/` and persists between restarts.
+Data is stored in `~/.pg0/data/` (or your custom `--data-dir`) and persists between restarts.
 
 ## Build from Source
 
 ```bash
-./build.sh
+cargo build --release
 ```
 
-The binary will be at `target/release/embedded-postgres`.
+The binary will be at `target/release/pg0`.
 
 ## License
 

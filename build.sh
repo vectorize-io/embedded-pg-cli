@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-echo "Building embedded-postgres-cli..."
+echo "Building pg0..."
 
 # Build release binary
 cargo build --release
 
 # Get the binary path
-BINARY="target/release/embedded-postgres"
+BINARY="target/release/pg0"
 
 echo ""
 echo "Build complete!"

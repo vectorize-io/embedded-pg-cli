@@ -31,8 +31,8 @@ enum CliError {
 }
 
 #[derive(Parser)]
-#[command(name = "embedded-postgres")]
-#[command(about = "Run embedded PostgreSQL without installation", long_about = None)]
+#[command(name = "pg0")]
+#[command(about = "Zero-dependency CLI to run embedded PostgreSQL locally", long_about = None)]
 #[command(version)]
 struct Cli {
     /// Enable verbose logging
@@ -56,7 +56,7 @@ enum Commands {
         version: String,
 
         /// Data directory
-        #[arg(short, long, default_value = "~/.embedded-postgres/data")]
+        #[arg(short, long, default_value = "~/.pg0/data")]
         data_dir: String,
 
         /// Username for the database
@@ -106,7 +106,7 @@ struct InstanceInfo {
 
 fn get_state_dir() -> Result<PathBuf, CliError> {
     dirs::home_dir()
-        .map(|h| h.join(".embedded-postgres"))
+        .map(|h| h.join(".pg0"))
         .ok_or(CliError::NoDataDir)
 }
 
@@ -358,11 +358,30 @@ fn start(
     // Install pgvector extension
     if let Err(e) = install_pgvector(&installation_dir, &version) {
         eprintln!("Warning: Failed to install pgvector: {}", e);
-        eprintln!("You can try installing it manually with: embedded-postgres install-extension vector");
+        eprintln!("You can try installing it manually with: pg0 install-extension vector");
     }
 
     println!("Starting PostgreSQL on port {}...", port);
     postgresql.start()?;
+
+    // Create the user if it's not the default 'postgres'
+    // Note: postgresql_embedded always creates 'postgres' as the superuser
+    if username != "postgres" {
+        println!("Creating user '{}'...", username);
+        let psql_path = find_psql_binary(&installation_dir)?;
+        let create_user_sql = format!(
+            "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{}') THEN CREATE USER \"{}\" WITH SUPERUSER PASSWORD '{}'; END IF; END $$;",
+            username, username, password.replace('\'', "''")
+        );
+        let status = std::process::Command::new(&psql_path)
+            .arg(&format!("postgresql://postgres:{}@localhost:{}/postgres", password, port))
+            .arg("-c")
+            .arg(&create_user_sql)
+            .status()?;
+        if !status.success() {
+            eprintln!("Warning: Failed to create user '{}'", username);
+        }
+    }
 
     // Create the database if it doesn't exist and it's not the default 'postgres'
     if database != "postgres" {
@@ -373,6 +392,16 @@ fn start(
             if !err_str.contains("already exists") {
                 return Err(e.into());
             }
+        }
+        // Grant privileges to the user on the database
+        if username != "postgres" {
+            let psql_path = find_psql_binary(&installation_dir)?;
+            let grant_sql = format!("GRANT ALL PRIVILEGES ON DATABASE \"{}\" TO \"{}\";", database, username);
+            let _ = std::process::Command::new(&psql_path)
+                .arg(&format!("postgresql://postgres:{}@localhost:{}/postgres", password, port))
+                .arg("-c")
+                .arg(&grant_sql)
+                .status();
         }
     }
 
@@ -406,7 +435,7 @@ fn start(
         username, password, port, database
     );
     println!();
-    println!("Use 'embedded-postgres stop' to stop the server.");
+    println!("Use 'pg0 stop' to stop the server.");
 
     // Detach - let the process continue running
     std::mem::forget(postgresql);
@@ -635,7 +664,7 @@ fn install_extension(name: String) -> Result<(), CliError> {
     println!("Extension '{}' installed successfully!", ext_name);
     println!();
     println!("To enable it in your database, run:");
-    println!("  embedded-postgres psql -c \"CREATE EXTENSION IF NOT EXISTS {};\"", ext_name);
+    println!("  pg0 psql -c \"CREATE EXTENSION IF NOT EXISTS {};\"", ext_name);
 
     Ok(())
 }

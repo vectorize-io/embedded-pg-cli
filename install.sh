@@ -7,8 +7,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-REPO="vectorize-io/embedded-pg-cli"
-BINARY_NAME="embedded-postgres"
+REPO="vectorize-io/pg0"
+BINARY_NAME="pg0"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 # Detect OS and architecture
@@ -54,7 +54,7 @@ get_latest_version() {
 }
 
 main() {
-    echo -e "${GREEN}Installing embedded-postgres CLI...${NC}"
+    echo -e "${GREEN}Installing pg0 - embedded PostgreSQL CLI...${NC}"
 
     local platform
     platform=$(detect_platform)

@@ -1,13 +1,13 @@
 [package]
-name = "embedded-postgres-cli"
+name = "pg0"
 version = "0.0.7"
 edition = "2021"
-description = "CLI to run embedded PostgreSQL without installation"
+description = "Zero-dependency CLI to run embedded PostgreSQL locally without installation"
 license = "MIT"
-repository = "https://github.com/vectorize-io/embedded-pg-cli"
+repository = "https://github.com/vectorize-io/pg0"
 
 [[bin]]
-name = "embedded-postgres"
+name = "pg0"
 path = "src/main.rs"
 
 [dependencies]
