@@ -173,12 +173,32 @@ pg0 install-extension <name>
 pg0 start [OPTIONS]
 
 Options:
-      --name <NAME>          Instance name [default: default]
-  -p, --port <PORT>          Port to listen on [default: 5432]
-  -d, --data-dir <DATA_DIR>  Data directory [default: ~/.pg0/instances/<name>/data]
-  -u, --username <USERNAME>  Username [default: postgres]
-  -P, --password <PASSWORD>  Password [default: postgres]
-  -n, --database <DATABASE>  Database name [default: postgres]
+      --name <NAME>           Instance name [default: default]
+  -p, --port <PORT>           Port to listen on [default: 5432]
+  -d, --data-dir <DATA_DIR>   Data directory [default: ~/.pg0/instances/<name>/data]
+  -u, --username <USERNAME>   Username [default: postgres]
+  -P, --password <PASSWORD>   Password [default: postgres]
+  -n, --database <DATABASE>   Database name [default: postgres]
+  -c, --config <KEY=VALUE>    PostgreSQL config option (can repeat)
+```
+
+### PostgreSQL Configuration
+
+pg0 applies optimized defaults for vector/AI workloads:
+- `shared_buffers=256MB`
+- `maintenance_work_mem=512MB` (faster index builds)
+- `effective_cache_size=1GB`
+- `max_parallel_maintenance_workers=4`
+- `work_mem=64MB`
+
+Override any setting with `-c`:
+
+```bash
+# Custom memory settings
+pg0 start -c shared_buffers=512MB -c work_mem=128MB
+
+# For larger workloads
+pg0 start -c shared_buffers=1GB -c maintenance_work_mem=2GB
 ```
 
 ## How It Works

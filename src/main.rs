@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use postgresql_embedded::blocking::PostgreSQL;
 use postgresql_embedded::{Settings, VersionReq};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use std::process;
@@ -76,6 +77,11 @@ enum Commands {
         /// Database name to create
         #[arg(short = 'n', long, default_value = "postgres")]
         database: String,
+
+        /// PostgreSQL configuration options (can be used multiple times)
+        /// Example: -c shared_buffers=512MB -c work_mem=128MB
+        #[arg(short = 'c', long = "config", value_name = "KEY=VALUE")]
+        config: Vec<String>,
     },
     /// Stop PostgreSQL server
     Stop {
@@ -402,6 +408,7 @@ fn start(
     username: String,
     password: String,
     database: String,
+    config: Vec<String>,
 ) -> Result<(), CliError> {
     // Check if already running
     if let Some(info) = load_instance(&name)? {
@@ -435,6 +442,25 @@ fn start(
         )
     })?;
 
+    // Build configuration HashMap with sensible defaults
+    let mut configuration: HashMap<String, String> = HashMap::new();
+
+    // Apply opinionated defaults optimized for vector/AI workloads
+    configuration.insert("shared_buffers".to_string(), "256MB".to_string());
+    configuration.insert("maintenance_work_mem".to_string(), "512MB".to_string());
+    configuration.insert("effective_cache_size".to_string(), "1GB".to_string());
+    configuration.insert("max_parallel_maintenance_workers".to_string(), "4".to_string());
+    configuration.insert("work_mem".to_string(), "64MB".to_string());
+
+    // Parse and apply custom config options (these override defaults)
+    for cfg in &config {
+        if let Some((key, value)) = cfg.split_once('=') {
+            configuration.insert(key.trim().to_string(), value.trim().to_string());
+        } else {
+            eprintln!("Warning: Invalid config format '{}', expected KEY=VALUE", cfg);
+        }
+    }
+
     let settings = Settings {
         version: version_req,
         port,
@@ -442,6 +468,7 @@ fn start(
         password: password.clone(),
         data_dir: data_dir.clone(),
         installation_dir: installation_dir.clone(),
+        configuration,
         ..Default::default()
     };
 
@@ -920,7 +947,8 @@ fn main() {
             username,
             password,
             database,
-        } => start(name, port, version, data_dir, username, password, database),
+            config,
+        } => start(name, port, version, data_dir, username, password, database, config),
         Commands::Stop { name } => stop(name),
         Commands::Info { name, output } => info(name, output),
         Commands::List { output } => list(output),
